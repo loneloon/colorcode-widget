@@ -1,0 +1,6 @@
+- Reset/clear drawing pad button
+- Result string compression
+- Reset focused color on palette switch
+- Prettier widget layout
+- Compose 3 default palettes
+- Optimize palette configuration
