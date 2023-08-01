@@ -1,4 +1,4 @@
-import React, { ReactElement, useCallback, useState } from "react";
+import React, { ReactElement, useCallback, useEffect, useState } from "react";
 import style from "./PasswordWidget.less";
 import { Palette } from "./Palette/Palette";
 import { DrawingPad } from "./DrawingPad/DrawingPad";
@@ -36,10 +36,15 @@ export function PasswordWidget({
   padWidthInCells,
   padHeightInCells,
 }: PasswordWidgetProps): ReactElement {
+  const [paletteId, setPaletteId] = useState(1);
   const [drawingColor, setDrawingColor] = useState(defaultDrawingColor);
   const [dataMatrix, setDataMatrix] = useState<Record<string, any>>({});
 
-  const resetDrawingPad = useCallback(() => {}, []);
+  useEffect(()=> {
+    setDrawingColor(palettes[paletteId][0])
+  }, [
+    paletteId, setPaletteId
+  ])
 
   return (
     <div className={style.widgetBlock}>
@@ -51,10 +56,34 @@ export function PasswordWidget({
         setDataMatrixFn={setDataMatrix}
       />
       <Palette
-        palettes={palettes}
-        defaultDrawingColor={defaultDrawingColor}
+        palette={palettes[paletteId]}
+        defaultDrawingColor={palettes[paletteId][0]}
         setDrawingColorFn={setDrawingColor}
       />
+      <div className={style.switchPaletteButtonBlock}>
+        <div
+          onClick={() =>
+            setPaletteId(
+              getNextIdx(
+                Object.keys(palettes).map((paletteIdx) => parseInt(paletteIdx)),
+                paletteId
+              )
+            )
+          }
+          className={style.switchPaletteButtonNext}
+        ></div>
+        <div
+          onClick={() =>
+            setPaletteId(
+              getPrevIdx(
+                Object.keys(palettes).map((paletteIdx) => parseInt(paletteIdx)),
+                paletteId
+              )
+            )
+          }
+          className={style.switchPaletteButtonPrev}
+        ></div>
+      </div>
       <input
         id="password"
         value={converRecordToString(
@@ -82,4 +111,20 @@ function converRecordToString(
   }
 
   return elementsSortedByIdx.join("");
+}
+
+function getNextIdx(indexes: number[], currentIdx: number): number {
+  if (indexes.includes(currentIdx + 1)) {
+    return currentIdx + 1;
+  } else {
+    return indexes[0];
+  }
+}
+
+function getPrevIdx(indexes: number[], currentIdx: number): number {
+  if (indexes.includes(currentIdx - 1)) {
+    return currentIdx - 1;
+  } else {
+    return indexes[indexes.length - 1];
+  }
 }
