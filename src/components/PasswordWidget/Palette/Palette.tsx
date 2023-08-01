@@ -3,20 +3,24 @@ import style from "./Palette.less";
 
 interface PaletteProps {
   palette: string[];
-  defaultDrawingColor: string;
   setDrawingColorFn: any;
 }
 
 export function Palette({
   palette,
-  defaultDrawingColor,
   setDrawingColorFn,
 }: PaletteProps): ReactElement {
-  const [focusedColor, focusColor] = useState(defaultDrawingColor);
+  const [focusedColor, focusColor] = useState(palette[0]);
+
+  // console.log(`Focused: ${focusedColor}`)
 
   useEffect(() => {
-    setDrawingColorFn(focusedColor);
-  }, [focusedColor, setDrawingColorFn, defaultDrawingColor]);
+    if (!palette.includes(focusedColor)) {
+      focusColor(palette[0])
+    } else {
+      setDrawingColorFn(focusedColor);
+    }
+  }, [focusedColor, setDrawingColorFn, palette]);
 
   const firstRow = palette.slice(0, 4);
   const secondRow = palette.slice(4);

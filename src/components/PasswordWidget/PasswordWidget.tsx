@@ -1,7 +1,7 @@
 import React, { ReactElement, useCallback, useEffect, useState } from "react";
 import style from "./PasswordWidget.less";
 import { Palette } from "./Palette/Palette";
-import { DrawingPad } from "./DrawingPad/DrawingPad";
+import { DrawingPad, DrawingPadState } from "./DrawingPad/DrawingPad";
 
 interface PasswordWidgetProps {
   padWidthInCells: number;
@@ -30,59 +30,82 @@ const palettes: Record<number, any> = {
     "#150A1E",
   ],
 };
-const defaultDrawingColor = "#FFFFFF";
+const defaultCellColor = "#FFFFFF";
 
 export function PasswordWidget({
   padWidthInCells,
   padHeightInCells,
 }: PasswordWidgetProps): ReactElement {
+  const [forceClear, setForceClear] = useState<boolean>(false)
+  const [drawindPadState, setDrawindPadState] = useState<DrawingPadState>("CLEAR")
   const [paletteId, setPaletteId] = useState(1);
-  const [drawingColor, setDrawingColor] = useState(defaultDrawingColor);
+  const [drawingColor, setDrawingColor] = useState(palettes[paletteId][0]);
   const [dataMatrix, setDataMatrix] = useState<Record<string, any>>({});
 
-  useEffect(()=> {
-    setDrawingColor(palettes[paletteId][0])
-  }, [
-    paletteId, setPaletteId
-  ])
+  // console.log(`First color: ${palettes[paletteId][0]}`)
+
+  useEffect(() => {
+    // console.log("Widget is rerendering...")
+    const padUniqueColorsSet = new Set(Object.values(dataMatrix))
+
+    if (padUniqueColorsSet.size == 1 && padUniqueColorsSet.has(defaultCellColor)) {
+      setDrawindPadState("CLEAR")
+    } else {
+      setDrawindPadState("EDITED")
+    }
+
+    if (drawindPadState == "CLEAR") {
+      setForceClear(false)
+    }
+  }, [drawindPadState, dataMatrix, setDataMatrix, forceClear])
 
   return (
     <div className={style.widgetBlock}>
       <DrawingPad
+        forceClear={forceClear}
         width={padWidthInCells}
         height={padHeightInCells}
-        defaultCellColor={defaultDrawingColor}
+        defaultCellColor={defaultCellColor}
         drawingColor={drawingColor}
         setDataMatrixFn={setDataMatrix}
       />
-      <Palette
+      <div className={style.controlPanel}>
+        <Palette
         palette={palettes[paletteId]}
-        defaultDrawingColor={palettes[paletteId][0]}
         setDrawingColorFn={setDrawingColor}
-      />
-      <div className={style.switchPaletteButtonBlock}>
-        <div
-          onClick={() =>
-            setPaletteId(
-              getNextIdx(
-                Object.keys(palettes).map((paletteIdx) => parseInt(paletteIdx)),
-                paletteId
+        />
+        <div className={style.buttonPad}>
+          <div onClick={() => setForceClear(true)} className={style.clearButton}>
+            CLEAR
+          </div>
+          <div
+            onClick={() =>
+              setPaletteId(
+                getPrevIdx(
+                  Object.keys(palettes).map((paletteIdx) => parseInt(paletteIdx)),
+                  paletteId
+                )
               )
-            )
-          }
-          className={style.switchPaletteButtonNext}
-        ></div>
-        <div
-          onClick={() =>
-            setPaletteId(
-              getPrevIdx(
-                Object.keys(palettes).map((paletteIdx) => parseInt(paletteIdx)),
-                paletteId
+            }
+            className={style.switchPaletteButton}
+          ><div className={style.arrowLeft}></div></div>
+          <div
+            onClick={() =>
+              setPaletteId(
+                getNextIdx(
+                  Object.keys(palettes).map((paletteIdx) => parseInt(paletteIdx)),
+                  paletteId
+                )
               )
-            )
-          }
-          className={style.switchPaletteButtonPrev}
-        ></div>
+            }
+            className={style.switchPaletteButton}
+          ><div className={style.arrowRight}></div></div>
+        </div>
+        <div className={style.complexityReviewDisplay}>
+          <div>COLORS USED: {getUniqueValuesNumberFromRecord(dataMatrix)}</div>
+          <div>COMPLEXITY: {getVerboseComplexityValueFromRecord(dataMatrix)}</div>
+          <div>STATE: {drawindPadState}</div>
+        </div>
       </div>
       <input
         id="password"
@@ -111,6 +134,24 @@ function converRecordToString(
   }
 
   return elementsSortedByIdx.join("");
+}
+
+function getUniqueValuesNumberFromRecord(input: Record<string, any>): number {
+  const colorSet = new Set(Object.values(input))
+  return colorSet.size
+}
+
+type VerbosePassComplexity = "WEAK" | "AVERAGE" | "STRONG"
+
+function getVerboseComplexityValueFromRecord(input: Record<string, any>): VerbosePassComplexity {
+  const colorSet = new Set(Object.values(input))
+  if (colorSet.size > 6){
+    return "STRONG"
+  } else if (colorSet.size > 3) {
+    return "AVERAGE"
+  } else {
+    return "WEAK"
+  }
 }
 
 function getNextIdx(indexes: number[], currentIdx: number): number {

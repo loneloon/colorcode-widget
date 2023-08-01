@@ -2,7 +2,10 @@ import React, { ReactElement, useEffect, useState } from "react";
 import style from "./DrawingPad.less";
 import _ from "lodash";
 
+export type DrawingPadState = "CLEAR" | "EDITED"
+
 interface DrawingPadProps {
+  forceClear: boolean;
   width: number;
   height: number;
   defaultCellColor: string;
@@ -11,6 +14,7 @@ interface DrawingPadProps {
 }
 
 export function DrawingPad({
+  forceClear,
   width,
   height,
   defaultCellColor,
@@ -32,8 +36,12 @@ export function DrawingPad({
   const [drawingPadMatrix, setDrawingPadMatrix] = useState(emptyMatrixRecord);
 
   useEffect(() => {
+    if (forceClear) {
+      setDrawingPadMatrix(emptyMatrixRecord)
+    }
+
     setDataMatrixFn(drawingPadMatrix);
-  }, [drawingPadMatrix, setDataMatrixFn]);
+  }, [forceClear, drawingPadMatrix, setDataMatrixFn]);
 
   return (
     <div className={style.drawingPadBlock}>
